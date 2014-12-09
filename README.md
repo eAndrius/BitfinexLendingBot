@@ -14,13 +14,13 @@ If you still don't have an account with [Bitfinex](https://www.bitfinex.com/?ref
 
 2. Download dependencies
 
- * If using [glide](https://github.com/Masterminds/glide):
+    If using [glide](https://github.com/Masterminds/glide):
 
-         cd BitfinexLendingBot/ && glide in && glide update
+        cd BitfinexLendingBot/ && glide in && glide update
 
- * Alternatively, with go get:
+ Alternatively, with go get:
 
-         go get -u github.com/eAndrius/bitfinex-go
+        go get -u github.com/eAndrius/bitfinex-go
 
 3. Compile bot
 
@@ -37,52 +37,43 @@ If you still don't have an account with [Bitfinex](https://www.bitfinex.com/?ref
 
 ## Flags
 
-### `--conf`
+* `--conf` Select configuration file. **Default value:** "default.conf".
 
-Select configuration file. **Default value:** "default.conf"
+    Example:
 
-Example:
+        ./BitfinexLendingBot --conf=good_strategy.conf
 
-    ./BitfinexLendingBot --conf=good_strategy.conf
+* `--updatelends` Instruct Bot to update lend offerings based on the strategy in configuration file.
 
-### `--updatelends`
+    Example:
 
-Instruct Bot to update lend offerings based on the strategy in configuration file.
+        ./BitfinexLendingBot --updatelends
 
-Example:
+* `--dryrun` Output strategy decisions without placing actual lends on the exchange.
 
-    ./BitfinexLendingBot --updatelends
+    Example:
 
+        ./BitfinexLendingBot --updatelends --dryrun
 
-### `--dryrun`
+* `--logtofile` Append Bot log to a file `blb.log` instead of stdout.
 
-Output strategy decisions without placing actual lends on the exchange.
+    Example:
 
-Example:
-
-    ./BitfinexLendingBot --updatelends --dryrun
-
-### `--logtofile`
-
-Append Bot log to a file `blb.log` instead of stdout.
-
-Example:
-
-    ./BitfinexLendingBot --updatelends --logtofile
+        ./BitfinexLendingBot --updatelends --logtofile
 
 ## Scheduling
 
-* To run the Bot every 10 minutes with cron (`$ crontab -e`) use:
+To run the Bot every 10 minutes with cron (`$ crontab -e`) use:
 
-    ```
+```
 */10 * * * * lockrun -n /tmp/blb.lock BitfinexLendingBot --updatelends --logtofile
-    ```
+```
 
-* Alternatively, to run in GNU Screen or similar use:
+Alternatively, to run in GNU Screen or similar use:
 
-    ```bash
+```bash
 while [[ 1 ]]; do BitfinexLendingBot --updatelends --logtofile; sleep 10m; done
-    ```
+```
 
 # Configuration
 
