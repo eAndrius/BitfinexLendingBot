@@ -88,19 +88,20 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 		minLoan = bconf.Bitfinex.MinLoanUSD / ticker.Mid
 	}
 
+	// Sanity check: is there anything to lend?
+	walletAmount := balance[bitfinex.WalletKey{"deposit", activeWallet}].Amount
+	if walletAmount < minLoan {
+		log.Println("\tWARNING: Wallet amount (" +
+			strconv.FormatFloat(walletAmount, 'f', -1, 64) + " " + activeWallet + ") is less than the allowed minimum (" +
+			strconv.FormatFloat(minLoan, 'f', -1, 64) + " " + activeWallet + ")")
+	}
+
 	// Determine available funds for trading
 	available := balance[bitfinex.WalletKey{"deposit", activeWallet}].Available
 
 	// Check if we need to limit our usage
 	if bconf.Bitfinex.MaxActiveAmount >= 0 {
 		available = math.Min(available, bconf.Bitfinex.MaxActiveAmount)
-	}
-
-	// Sanity check: is there anything to lend?
-	if available < minLoan {
-		log.Println("\tWARNING: Available balance (" +
-			strconv.FormatFloat(available, 'f', -1, 64) + " " + activeWallet + ") is less than the allowed minimum (" +
-			strconv.FormatFloat(minLoan, 'f', -1, 64) + " " + activeWallet + ")")
 	}
 
 	loanOffers := marginBotGetLoanOffers(available, minLoan, lendbook, conf)
