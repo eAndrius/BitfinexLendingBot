@@ -2,8 +2,6 @@
 
 // TODO: evaluate different strategies:
 // 	https://github.com/evdubs/Harmonia
-//	https://github.com/mariodian/bitfinex-auto-lend
-//	https://github.com/ah3dce/cascadebot
 
 package main
 
@@ -14,8 +12,9 @@ import (
 
 // StrategyConf ...
 type StrategyConf struct {
-	Active    string
-	MarginBot MarginBotConf
+	Active     string
+	MarginBot  MarginBotConf
+	CascadeBot CascadeBotConf
 }
 
 func executeStrategy(conf BotConfig, dryRun bool) (err error) {
@@ -27,6 +26,8 @@ func executeStrategy(conf BotConfig, dryRun bool) (err error) {
 	switch strings.ToLower(conf.Strategy.Active) {
 	case "marginbot":
 		return strategyMarginBot(conf, dryRun)
+	case "cascadebot":
+		return strategyCascadeBot(conf, dryRun)
 	}
 
 	return errors.New("Undefined strategy")

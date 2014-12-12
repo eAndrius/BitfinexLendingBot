@@ -51,7 +51,7 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 			strconv.FormatFloat(conf.MinDailyLendRate, 'f', -1, 64) + "% / day)")
 	}
 
-	//1. Goes on bitfinex, cancels all pending loans to put the money back
+	// Cancel all active offers
 	log.Println("\tCancelling all active " + activeWallet + " offers...")
 
 	if !dryRun {
@@ -61,7 +61,7 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 		}
 	}
 
-	//2. Grabs the current lendbook to see what the going rate is
+	// Update the lendbook
 	log.Println("\tGetting current lendbook...")
 
 	lendbook, err := api.Lendbook(activeWallet, 0, 10000)
