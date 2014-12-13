@@ -1,5 +1,8 @@
 // Copyright Andrius Sutas BitfinexLendingBot [at] motoko [dot] sutas [dot] eu
 // Strategy inspired by: https://github.com/ah3dce/cascadebot
+// Unlike the original cascadebot strategy, we start from FRR + Increment rate,
+// so that the start lending rate settings would adapt dynamically to the lendbook
+// and prevent offers from sitting unlent for long.
 
 package main
 
@@ -16,7 +19,7 @@ import (
 
 // CascadeBotConf ...
 type CascadeBotConf struct {
-	StartDailyLendRate       float64
+	StartDailyLendRateFRRInc float64
 	MinDailyLendRate         float64
 	ReductionIntervalMinutes float64
 	ReduceDailyLendRate      float64
@@ -50,14 +53,6 @@ func strategyCascadeBot(bconf BotConfig, dryRun bool) (err error) {
 		log.Println("\tWARNING: minimum daily lend rate is low (" + strconv.FormatFloat(conf.MinDailyLendRate, 'f', -1, 64) + "%)")
 	}
 
-	// Sanity check: are starting rate more than the minimum?
-	if conf.StartDailyLendRate < conf.MinDailyLendRate {
-		log.Println("\tERROR: starting daily lend rate (" + strconv.FormatFloat(conf.StartDailyLendRate, 'f', -1, 64) +
-			") is lower than minimum daily lend rate (" + strconv.FormatFloat(conf.MinDailyLendRate, 'f', -1, 64) + ")")
-
-		return errors.New("starting daily lend rate is lower than minimum daily lend rate")
-	}
-
 	// Get all active offers
 	log.Println("\tGetting all active offers...")
 	allOffers, err := api.ActiveOffers()
@@ -72,6 +67,27 @@ func strategyCascadeBot(bconf BotConfig, dryRun bool) (err error) {
 		if strings.ToLower(o.Currency) == activeWallet && strings.ToLower(o.Direction) == "lend" {
 			offers = append(offers, o)
 		}
+	}
+
+	log.Println("\tGetting current lendbook for FRR...")
+
+	lendbook, err := api.Lendbook(activeWallet, 0, 10000)
+	if err != nil {
+		return
+	}
+
+	FRR := 1.0
+	for _, o := range lendbook.Asks {
+		if o.FRR {
+			FRR = o.Rate / 365
+			break
+		}
+	}
+
+	// Sanity check: is the daily lend rate sane?
+	if FRR+conf.StartDailyLendRateFRRInc >= 0.5 {
+		log.Println("\tWARNING: Starting daily lend rate (" +
+			strconv.FormatFloat(FRR+conf.StartDailyLendRateFRRInc, 'f', -1, 64) + " %/day) is unusually high")
 	}
 
 	log.Println("\tGetting current wallet balance...")
@@ -109,7 +125,7 @@ func strategyCascadeBot(bconf BotConfig, dryRun bool) (err error) {
 		available = math.Min(available, bconf.Bitfinex.MaxActiveAmount)
 	}
 
-	actions := cascadeBotGetActions(available, minLoan, offers, conf)
+	actions := cascadeBotGetActions(available, minLoan, FRR, offers, conf)
 
 	// Execute the actions
 	for _, a := range actions {
@@ -145,7 +161,7 @@ func strategyCascadeBot(bconf BotConfig, dryRun bool) (err error) {
 	return
 }
 
-func cascadeBotGetActions(fundsAvailable, minLoan float64, activeOffers bitfinex.Offers, conf CascadeBotConf) (actions CascadeBotActions) {
+func cascadeBotGetActions(fundsAvailable, minLoan, dailyFRR float64, activeOffers bitfinex.Offers, conf CascadeBotConf) (actions CascadeBotActions) {
 	// Update lend rates where needed
 	for _, o := range activeOffers {
 		// Check if we need to update the offer based on its timestamp
@@ -184,7 +200,7 @@ func cascadeBotGetActions(fundsAvailable, minLoan float64, activeOffers bitfinex
 	// Are there spare funds to offer at the "starting" daily amount?
 	if fundsAvailable >= minLoan {
 		actions = append(actions, CascadeBotAction{Action: lend,
-			YearlyRate: conf.StartDailyLendRate * 365, Amount: fundsAvailable, Period: 2})
+			YearlyRate: (dailyFRR + conf.StartDailyLendRateFRRInc) * 365, Amount: fundsAvailable, Period: 2})
 	}
 
 	return
