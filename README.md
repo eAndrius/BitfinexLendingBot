@@ -83,8 +83,8 @@ An example for multiple account configuration in `default.conf`:
 [
     {
         "bitfinex": {
-            "APIKey": "<<key>>",
-            "APISecret": "<<secret>>",
+            "APIKey": "<key1>",
+            "APISecret": "<secret1>",
             "MinLoanUSD": 50,
             "ActiveWallet": "btc",
             "MaxActiveAmount": -1
@@ -94,13 +94,35 @@ An example for multiple account configuration in `default.conf`:
             "Active": "MarginBot",
 
             "MarginBot": {
-                "MinDailyLendRate": 0.004,
+                "MinDailyLendRate": 0.01,
                 "SpreadLend": 3,
-                "GapBottom": 10,
+                "GapBottom": 100,
                 "GapTop": 5000,
                 "ThirtyDayDailyThreshold": 0.0,
                 "HighHoldDailyRate": 0.05,
                 "HighHoldAmount": 0.0
+            }
+        }
+    },
+    {
+        "bitfinex": {
+            "APIKey": "<key2>",
+            "APISecret": "<secret2>",
+            "MinLoanUSD": 50,
+            "ActiveWallet": "btc",
+            "MaxActiveAmount": -1
+        },
+
+        "strategy": {
+            "Active": "CascadeBot",
+
+            "CascadeBot": {
+                "StartDailyLendRateFRRInc": 0.0012,
+                "ReduceDailyLendRate": 0.0001,
+                "MinDailyLendRate": 0.01,
+                "ReductionIntervalMinutes": 10,
+                "LendPeriod": 2,
+                "ExponentialDecayMult": 1.0
             }
         }
     }
@@ -128,7 +150,7 @@ General settings for the Bitfinex exchange.
 
 Parameter for setting bot strategy for the account.
 
-* `Active` String. Which strategy should the bot use for calculating swap lends. **Values:** *MarginBot*.
+* `Active` String. Which strategy should the bot use for calculating swap lends. **Values:** *MarginBot, CascadeBot*.
 
 ### MarginBot Strategy
 
@@ -148,9 +170,25 @@ Lending strategy inspired by [MarginBot](https://github.com/HFenter/MarginBot).
 
 * `HighHoldAmount` Float. The amount of currency to offer at the `HighHoldDailyRate` rate. Does **not** count towards `SpreadLend` parameter. Always offered for 30 day period. If set to *0* High Hold offer is not made.
 
-### Comparing Strategies
+### CascadeBot Strategy
 
-See a [weekly updated spreadsheet](https://docs.google.com/a/sutas.eu/spreadsheets/d/1lUwuN0KUwVIDBCxXOMNBsZyx_XsB1ND_KFmAJlUMRKQ) showing actual returns between different strategies and Flash Return Rate (Autorenew) Bitfinex option. For the bitcoin wallet balances start at 1 BTC for the each strategy and are always lent out in full (i.e. profits are accumulated). Strategy default parameters are used.
+Lending strategy inspired by [CascadeBot](https://github.com/ah3dce/cascadebot). The strategy is modified so that starting daily lend rate is not defined as an absolute value, but rather than an increment (which can also be negative) to FRR.
+
+* `StartDailyLendRateFRRInc` Float. The starting rate of FRR + `StartDailyLendRateFRRInc` that offers will be placed at.
+
+* `ReduceDailyLendRate` Float. The rate at which to reduce already existing offers every `ReductionIntervalMinutes` minutes.
+
+* `MinDailyLendRate` Float. The minimum daily lend rate that you're willing to lend at.
+
+* `LendPeriod` Integer. The period for lend offers.
+
+* `ReductionIntervalMinutes` Float. How often should the unlent offers` rate be decremented. Note that this parameter should be more than or equal to the interval at which bot is scheduled to run (usually 10 minutes).
+
+* `ExponentialDecayMult` Float. Exponential decay constant which sets the decay rate. Set to *1* for a linear decay. Decay formula: ```NewDailyRate = (CurrentDailyRate - MinDailyLendRate) * ExponentialDecayMult + MinDailyLendRate```.
+
+## Comparing Strategies
+
+See a [weekly updated spreadsheet](https://docs.google.com/a/sutas.eu/spreadsheets/d/1lUwuN0KUwVIDBCxXOMNBsZyx_XsB1ND_KFmAJlUMRKQ) showing actual returns between different strategies and Flash Return Rate (Autorenew) Bitfinex option. For the bitcoin wallet balances start at 1 BTC for the each strategy and are always lent out in full (i.e. profits are accumulated). Strategy-default parameters are used.
 
 # Licensing
 
