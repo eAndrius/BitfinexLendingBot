@@ -72,7 +72,8 @@ func main() {
 
 		balance, err := conf.API.WalletBalances()
 		if err != nil {
-			log.Fatal("Failed to get wallet funds: " + err.Error())
+			log.Println("WARNING: Failed to get wallet funds, skipping: " + err.Error())
+			continue
 		}
 
 		activeWallet := strings.ToLower(conf.Bitfinex.ActiveWallet)
@@ -85,7 +86,8 @@ func main() {
 		if *updateLends {
 			err = executeStrategy(conf, *dryRun)
 			if err != nil {
-				log.Fatal("Failed to execute strategy: " + err.Error())
+				log.Println("WARNING: Failed to execute strategy: " + err.Error())
+				continue
 			}
 		}
 	}
