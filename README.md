@@ -5,12 +5,14 @@ BitfinexLendingBot (BLB) is a bot written in Go for automatic swap lending on th
 If you still don't have an account with [Bitfinex](https://www.bitfinex.com/?refcode=7zVc3vSAbR), please use referrer code **7zVc3vSAbR**, that way you will get a discount on your lending fees and will support the continued development of this project.
 
 # Tutorial
-1. Requirements
+0. Requirements
 
  * Go >= 1.2
  * [Bitfinex account](https://www.bitfinex.com/?refcode=7zVc3vSAbR)
  * (Optional) [glide](https://github.com/Masterminds/glide)
  * (Optional) Access to Crontab
+
+1. Download or clone the main project and extract files to `BitfinexLendingBot` directory.
 
 2. Download dependencies
 
@@ -20,9 +22,9 @@ If you still don't have an account with [Bitfinex](https://www.bitfinex.com/?ref
 
  Alternatively, with go get:
 
-        go get -u github.com/eAndrius/bitfinex-go
+        cd BitfinexLendingBot/ && go get -u github.com/eAndrius/bitfinex-go
 
-3. Compile bot
+3. Compile bot (in `BitfinexLendingBot` directory)
 
         go build
 
