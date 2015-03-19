@@ -101,7 +101,8 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 
 	// Check if we need to limit our usage
 	if bconf.Bitfinex.MaxActiveAmount >= 0 {
-		available = math.Min(available, bconf.Bitfinex.MaxActiveAmount)
+		available = math.Min(available, math.Min(available + bconf.Bitfinex.MaxActiveAmount - walletAmount, bconf.Bitfinex.MaxActiveAmount))
+
 	}
 
 	loanOffers := marginBotGetLoanOffers(available, minLoan, lendbook, conf)
