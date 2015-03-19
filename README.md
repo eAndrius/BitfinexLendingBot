@@ -74,7 +74,7 @@ To run the Bot every 10 minutes with cron (`$ crontab -e`) use:
 Alternatively, to run in GNU Screen or similar use:
 
 ```bash
-while [[ 1 ]]; do BitfinexLendingBot --updatelends --logtofile; sleep 10m; done
+while [[ 1 ]]; do timeout 30s BitfinexLendingBot --updatelends --logtofile; sleep 10m; done
 ```
 
 # Configuration
