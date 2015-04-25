@@ -200,7 +200,7 @@ func cascadeBotGetActions(fundsAvailable, minLoan, dailyFRR float64, activeOffer
 	// Are there spare funds to offer at the "starting" daily amount?
 	if fundsAvailable >= minLoan {
 		actions = append(actions, CascadeBotAction{Action: lend,
-			YearlyRate: (dailyFRR + conf.StartDailyLendRateFRRInc) * 365, Amount: fundsAvailable, Period: 2})
+			YearlyRate: (dailyFRR + conf.StartDailyLendRateFRRInc) * 365, Amount: fundsAvailable, Period: conf.LendPeriod})
 	}
 
 	return
