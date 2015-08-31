@@ -101,7 +101,7 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 
 	// Check if we need to limit our usage
 	if bconf.Bitfinex.MaxActiveAmount >= 0 {
-		available = math.Min(available, math.Min(available + bconf.Bitfinex.MaxActiveAmount - walletAmount, bconf.Bitfinex.MaxActiveAmount))
+		available = math.Min(available, math.Min(available+bconf.Bitfinex.MaxActiveAmount-walletAmount, bconf.Bitfinex.MaxActiveAmount))
 
 	}
 
@@ -148,10 +148,11 @@ func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.L
 		loanOffers = append(loanOffers, tmp)
 	}
 
+	// How many splits do we want?
+	numSplits := conf.SpreadLend
+
 	// is there anything left after the highhold?  if so, lets split it up
-	if splitFundsAvailable >= minLoan {
-		// How many splits do we want?
-		numSplits := conf.SpreadLend
+	if numSplits > 0 && splitFundsAvailable >= minLoan {
 
 		// Round number to max precision supported by bitfinex
 		amtEach := splitFundsAvailable / float64(numSplits)
@@ -164,6 +165,7 @@ func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.L
 			amtEach = splitFundsAvailable / float64(numSplits)
 			// Truncate to 8 decimal places
 			amtEach = float64(int(amtEach*100000000)) / 100000000.0
+
 		}
 
 		// Sanity check: is there any positive number of splits possible?
