@@ -157,14 +157,14 @@ func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.L
 		// Round number to max precision supported by bitfinex
 		amtEach := splitFundsAvailable / float64(numSplits)
 		// Truncate to 8 decimal places
-		amtEach = float64(int(amtEach*100000000)) / 100000000.0
+		amtEach = float64(int64(amtEach*100000000)) / 100000000.0
 
 		// Minimize number of splits in case we cannot split in the number of required parts
 		for amtEach <= minLoan {
 			numSplits--
 			amtEach = splitFundsAvailable / float64(numSplits)
 			// Truncate to 8 decimal places
-			amtEach = float64(int(amtEach*100000000)) / 100000000.0
+			amtEach = float64(int64(amtEach*100000000)) / 100000000.0
 
 		}
 
