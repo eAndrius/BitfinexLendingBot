@@ -178,27 +178,24 @@ func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.L
 
 		// Keep running total
 		depthIndex := 0
-		depthAmount := lendbook.Asks[depthIndex].Amount
+		depthAmount := float64(0)
 
 		for numSplits > 0 {
 			// Go trough lendbook until we meet our "nextLend" limit
 			for depthAmount < nextLend && depthIndex < len(lendbook.Asks)-1 {
-				depthIndex++
-
-				if !lendbook.Asks[depthIndex].FRR {
-					depthAmount += lendbook.Asks[depthIndex].Amount
+				if lendbook.Asks[depthIndex].FRR || lendbook.Asks[depthIndex].Rate < conf.MinDailyLendRate*365 {
+					depthIndex++
+					continue
 				}
+				depthAmount += lendbook.Asks[depthIndex].Amount
+
+				depthIndex++
 			}
 
 			tmp := MarginBotLoanOffer{}
 			tmp.Amount = amtEach
 
-			// Make sure the gap setting rate is higher than the minimum lend rate...
-			if lendbook.Asks[depthIndex].Rate < conf.MinDailyLendRate*365 {
-				tmp.Rate = conf.MinDailyLendRate * 365
-			} else {
-				tmp.Rate = lendbook.Asks[depthIndex].Rate
-			}
+			tmp.Rate = lendbook.Asks[depthIndex].Rate - float64(0.001)
 
 			// Are there loans that have high rate? If yes, lend them for as long as possible
 			if conf.ThirtyDayDailyThreshold > 0 && lendbook.Asks[depthIndex].Rate >= conf.ThirtyDayDailyThreshold*365 {
