@@ -189,7 +189,9 @@ func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.L
 				}
 				depthAmount += lendbook.Asks[depthIndex].Amount
 
-				depthIndex++
+				if depthAmount < nextLend {
+					depthIndex++
+				}
 			}
 
 			tmp := MarginBotLoanOffer{}
