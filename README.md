@@ -7,7 +7,7 @@ If you still don't have an account with [Bitfinex](https://www.bitfinex.com/?ref
 # Tutorial
 0. Requirements
 
- * Go >= 1.2
+ * Go >= 1.3
  * [Bitfinex account](https://www.bitfinex.com/?refcode=7zVc3vSAbR)
  * (Optional) [glide](https://github.com/Masterminds/glide)
  * (Optional) Access to Crontab
