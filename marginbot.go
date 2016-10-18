@@ -24,14 +24,14 @@ type MarginBotConf struct {
 	HighHoldAmount          float64
 }
 
-// MarginBotLoanOffer ...
-type MarginBotLoanOffer struct {
-	Amount, Rate float64
+// MarginBotAmountPeriod ...
+type MarginBotAmountPeriod struct {
+	Amount float64
 	Period       int
 }
 
-// MarginBotLoanOffers ...
-type MarginBotLoanOffers []MarginBotLoanOffer
+// MarginBotLoanOffers <rate, (amount, period) >...
+type MarginBotLoanOffers map[float64]MarginBotAmountPeriod
 
 func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	api := bconf.API
@@ -108,13 +108,13 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 	loanOffers := marginBotGetLoanOffers(available, minLoan, lendbook, conf)
 
 	// Place the offers
-	for _, o := range loanOffers {
+	for rate, o := range loanOffers {
 		log.Println("\tPlacing offer: " +
 			strconv.FormatFloat(o.Amount, 'f', -1, 64) + " " + activeWallet + " @ " +
-			strconv.FormatFloat(o.Rate/365.0, 'f', -1, 64) + " % for " + strconv.Itoa(o.Period) + " days")
+			strconv.FormatFloat(rate/365.0, 'f', -1, 64) + " % for " + strconv.Itoa(o.Period) + " days")
 
 		if !dryRun {
-			_, err = api.NewOffer(strings.ToUpper(activeWallet), o.Amount, o.Rate, o.Period, bitfinex.LEND)
+			_, err = api.NewOffer(strings.ToUpper(activeWallet), o.Amount, rate, o.Period, bitfinex.LEND)
 
 			if err != nil {
 				return errors.New("Failed to place new offer: " + err.Error())
@@ -128,6 +128,8 @@ func strategyMarginBot(bconf BotConfig, dryRun bool) (err error) {
 }
 
 func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.Lendbook, conf MarginBotConf) (loanOffers MarginBotLoanOffers) {
+	loanOffers = make(MarginBotLoanOffers)
+
 	// Sanity check: if it's less than minLonad we have nothing to do
 	if fundsAvailable < minLoan {
 		return
@@ -138,14 +140,15 @@ func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.L
 	// HighHold is a special case, substract from the available amount
 	// HighHoldAmount = 0 => No HighHold required
 	if conf.HighHoldAmount > minLoan {
-		tmp := MarginBotLoanOffer{
+		tmp := MarginBotAmountPeriod{
 			Amount: math.Min(fundsAvailable, conf.HighHoldAmount), // Make sure we have required balance to make HighHold offer
-			Rate:   conf.HighHoldDailyRate * 365,
 			Period: 30, // Always offer HighHold rate for 30 days
 		}
 
+		rate := conf.HighHoldDailyRate * 365
+
 		splitFundsAvailable -= tmp.Amount
-		loanOffers = append(loanOffers, tmp)
+		loanOffers[rate] = tmp
 	}
 
 	// How many splits do we want?
@@ -178,24 +181,26 @@ func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.L
 
 		// Keep running total
 		depthIndex := 0
-		depthAmount := lendbook.Asks[depthIndex].Amount
+		depthAmount := float64(0)
 
 		for numSplits > 0 {
 			// Go trough lendbook until we meet our "nextLend" limit
 			for depthAmount < nextLend && depthIndex < len(lendbook.Asks)-1 {
-				depthIndex++
+				if lendbook.Asks[depthIndex].FRR || lendbook.Asks[depthIndex].Rate < conf.MinDailyLendRate*365 {
+					depthIndex++
+					continue
+				}
 				depthAmount += lendbook.Asks[depthIndex].Amount
+
+				if depthAmount < nextLend {
+					depthIndex++
+				}
 			}
 
-			tmp := MarginBotLoanOffer{}
+			tmp := MarginBotAmountPeriod{}
 			tmp.Amount = amtEach
 
-			// Make sure the gap setting rate is higher than the minimum lend rate...
-			if lendbook.Asks[depthIndex].Rate < conf.MinDailyLendRate*365 {
-				tmp.Rate = conf.MinDailyLendRate * 365
-			} else {
-				tmp.Rate = lendbook.Asks[depthIndex].Rate
-			}
+			rate := lendbook.Asks[depthIndex].Rate - float64(0.001)
 
 			// Are there loans that have high rate? If yes, lend them for as long as possible
 			if conf.ThirtyDayDailyThreshold > 0 && lendbook.Asks[depthIndex].Rate >= conf.ThirtyDayDailyThreshold*365 {
@@ -204,7 +209,11 @@ func marginBotGetLoanOffers(fundsAvailable, minLoan float64, lendbook bitfinex.L
 				tmp.Period = 2
 			}
 
-			loanOffers = append(loanOffers, tmp)
+			insert := loanOffers[rate]
+			insert.Amount = loanOffers[rate].Amount + tmp.Amount
+			insert.Period = tmp.Period
+			loanOffers[rate] = insert
+
 			nextLend += gapClimb
 			numSplits--
 		}
