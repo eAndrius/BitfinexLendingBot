@@ -2,7 +2,7 @@
 
 BitfinexLendingBot (BLB) is a bot written in Go for automatic swap lending on the [Bitfinex](https://www.bitfinex.com/?refcode=7zVc3vSAbR) exchange. It works with all supported currencies (USD, BTC, LTC), is headless, does not require database setups and has unit testing for the lending strategies.
 
-If you still don't have an account with [Bitfinex](https://www.bitfinex.com/?refcode=7zVc3vSAbR), please use referrer code **7zVc3vSAbR**, that way you will get a discount on your lending fees and will support the continued development of this project.
+If you still don't have an account with [Bitfinex](https://www.bitfinex.com/?refcode=7zVc3vSAbR), please use [referral link here](https://www.bitfinex.com/?refcode=7zVc3vSAbR) to register, that way you will get a discount on your lending fees and will support the continued development of this project.
 
 # Tutorial
 0. Requirements
